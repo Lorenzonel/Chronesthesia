@@ -1,0 +1,72 @@
+import random
+import csv
+import os
+
+# Definisci il numero del partecipante come viene fatto nell'altro esperimento
+subject_nr = var.subject_nr  # Assumi che questa variabile sia già definita in OpenSesame
+
+# Definisci l'ISI medio e il range di jittering (esempio: ±200 ms)
+isi_medio = 1200  # ISI medio di 1200 ms
+jittering = 200   # Jittering di ±200 ms
+interval_duration = 800  # Durata dell'intervallo tra la fine della croce di fissazione e gli stimoli
+sound_duration = 33
+
+# Percorso per salvare i risultati con il numero del partecipante
+path_to_save = os.path.expanduser('~/Desktop/Lorenzo/Risultati SJ')  # Assicurati che il percorso esista
+os.makedirs(path_to_save, exist_ok=True)
+
+# Crea il nome del file in base al numero del partecipante
+file_name = f"subject_{subject_nr}.sj"
+file_path = os.path.join(path_to_save, file_name)
+
+# Verifica se il file esiste già. Se non esiste, crea l'intestazione
+if not os.path.exists(file_path):
+    with open(file_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        # Scrivi l'intestazione del file
+        writer.writerow(['SOA', 'Response', 'RT', 'Accuracy'])
+
+# Funzione per salvare i dati di ogni trial
+def salva_dati(soa, key, rt, accuracy):
+    with open(file_path, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        # Scrivi i dati di ogni trial nel file
+        writer.writerow([soa, key, rt, accuracy])
+
+# Inizio del trial
+isi_casuale = isi_medio + random.randint(-jittering, jittering)
+blank_canvas.show()
+exp.clock.sleep(interval_duration)
+start_time = exp.clock.time()
+
+# Gestione degli stimoli
+if soa < 0:
+    my_sampler.play()
+    exp.clock.sleep(sound_duration)  # Durata del suono
+    exp.clock.sleep(abs(soa))  
+    visual_canvas.show()
+elif soa > 0:
+    visual_canvas.show()
+    exp.clock.sleep(sound_duration)
+    blank_canvas.show()
+    exp.clock.sleep(soa)
+    my_sampler.play()
+else:  # SOA = 0
+    my_sampler.play()
+    visual_canvas.show()
+
+exp.clock.sleep(sound_duration)
+blank_canvas.show()
+
+# Ottieni la risposta del partecipante
+key, rt = my_keyboard.get_key()
+rt = exp.clock.time() - start_time
+
+# Calcola l'accuratezza della risposta
+accuracy = 1 if (-150 <= soa <= 150 and key == 's') or ((soa < -150 or soa > 150) and key == 'j') else 0
+
+# Salva i risultati nel file CSV
+salva_dati(soa, key, rt, accuracy)
+
+# Pulisci il canvas alla fine del trial
+blank_canvas.show()
