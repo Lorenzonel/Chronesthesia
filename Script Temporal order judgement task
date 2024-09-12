@@ -1,0 +1,91 @@
+import random
+import csv
+import os
+
+# n partecipante
+subject_nr = var.subject_nr  # Assumi che questa variabile sia già definita in OpenSesame
+
+# ISI medio e range di jittering 
+isi_medio = 1200  # ISI medio di 1200 ms
+jittering = 200   # Jittering di ±200 ms
+interval_duration = 300  # intervallo tra la fine della croce di fissazione e lo stimolo
+sound_duration = 33  # Durata della riproduzione del suono in ms
+visual_duration = 33  # Durata dello stimolo visivo in ms
+
+
+# Percorso
+path_to_save = os.path.expanduser('~/Desktop/Lorenzo/Risultati TOJ')  # Assicurati che il percorso esista
+os.makedirs(path_to_save, exist_ok=True)
+
+# Nome del file in base al numero del partecipante "toj"
+file_name = f"subject_{subject_nr}_toj.csv"
+file_path = os.path.join(path_to_save, file_name)
+
+# nuovo file CSV con l'intestazione
+if not os.path.exists(file_path):
+    with open(file_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        # Scrivi l'intestazione del file CSV
+        writer.writerow(['SOA', 'Response', 'RT', 'Accuracy'])
+
+# Salvataggio
+def salva_dati(soa, key, rt, accuracy):
+    with open(file_path, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        # Scrivi i dati di ogni trial nel file CSV
+        writer.writerow([soa, key, rt, accuracy])
+
+# Registra il tempo iniziale prima di presentare qualsiasi stimolo
+pre_stimulus_time = exp.clock.time()
+
+# Nascondi croce prima di stimoli presentazione
+blank_canvas.show()
+
+# Intervallo tra la scomparsa della croce di fissazione e la presentazione degli stimoli
+exp.clock.sleep(interval_duration)
+
+# Presentazione degli stimoli in base al SOA
+if soa < 0:
+    my_sampler.play()  # Presenta il suono
+    exp.clock.sleep(abs(soa))  # Aspetta il valore assoluto di SOA
+    visual_canvas.show()  # Poi presenta lo stimolo visivo
+    exp.clock.sleep(visual_duration)  # Mostra lo stimolo visivo per 33 ms
+    blank_canvas.show()  # Nascondi lo stimolo visivo
+else:
+    visual_canvas.show()  # Presenta lo stimolo visivo
+    exp.clock.sleep(visual_duration)  # Mostra lo stimolo visivo per 33 ms
+    blank_canvas.show()  # Nascondi lo stimolo visivo
+    exp.clock.sleep(soa)  # Aspetta il valore di SOA
+    my_sampler.play()  # Poi presenta il suono
+
+# jitter dopo la raccolta della risposta
+isi_base = 1200  # Durata base dell'ISI in ms
+jitter = 200  # Jitter massimo in ms
+isi = random.randint(isi_base - jitter, isi_base + jitter)  # ISI effettivo con jitter
+exp.clock.sleep(isi)
+
+# timestamp per debug
+visual_stimulus_time = exp.clock.time()  # Tempo di presentazione del visivo
+
+# Registrazione del tempo di reazione subito dopo la presentazione degli stimoli
+start_time = visual_stimulus_time  # Inizia il tempo dal momento della presentazione del primo stimolo
+
+# Risposta dell'utente
+key, end_time = my_keyboard.get_key()
+
+# Calcolo RT
+rt = end_time - start_time
+
+
+correct_key = 'z' if soa < 0 else 'm'
+
+
+# Salvataggio
+salva_dati(soa, key, rt, accuracy)
+
+# Variabili
+var.rt = rt
+var.soa = soa
+var.key = key
+var.correct = correct_key
+var.accuracy = accuracy  # Aggiungi l'accuratezza
