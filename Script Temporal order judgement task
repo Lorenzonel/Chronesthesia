@@ -2,6 +2,14 @@ import random
 import csv
 import os
 
+# Last Update: 2024-09-16
+
+# Usage:
+# python script.py opt1 opt2 opt3
+# opt1: 
+# opt2:
+# etc
+
 # n partecipante
 subject_nr = var.subject_nr  # Assumi che questa variabile sia già definita in OpenSesame
 
